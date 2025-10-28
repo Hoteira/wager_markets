@@ -51,12 +51,12 @@ Follow progress: [@wager_markets](https://twitter.com/wager_markets)
 
 ## Roadmap
 
-- [ ] Core market contracts (binary outcomes)
-- [ ] AMM pricing mechanism
-- [ ] Resolution system (manual → oracle)
-- [ ] Market creation UI
-- [ ] Embeddable widget
-- [ ] Public launch
+- [<span style="color: yellow;"> 50%</span>] Core market contracts (binary outcomes) 
+- [<span style="color: red;">  0%</span>] AMM pricing mechanism
+- [<span style="color: red;">  0%</span>] Resolution system (manual → oracle)
+- [<span style="color: red;">  0%</span>] Market creation UI
+- [<span style="color: red;">  0%</span>] Embeddable widget
+- [<span style="color: red;">  0%</span>] Public launch
 
 ## License
 
