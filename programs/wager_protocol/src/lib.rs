@@ -9,7 +9,7 @@ use structs::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
-declare_id!("4jHsbdQ3VvtrxzGC1Mx7bNYGrdKge2imTDAqJC2QHYsB");
+declare_id!("82JeHWWTAsHLzQg6XfoXf2HyotFoUrNheNaCd8QphfAC");
 
 #[program]
 pub mod wager_protocol {
@@ -24,7 +24,6 @@ pub mod wager_protocol {
         msg!("WAGER Protocol initialized!");
         Ok(())
     }
-
     pub fn create_market(
         ctx: Context<CreateMarket>,
         question: String,
@@ -43,6 +42,10 @@ pub mod wager_protocol {
         market.total_volume = 0;
         market.outcome_pools = vec![0, 0];
         market.winning_outcome = None;
+
+        // Increment counter AFTER using it for PDA derivation
+        let protocol = &mut ctx.accounts.protocol;
+        protocol.market_count += 1;
 
         msg!("Market created: {}", market.question);
         Ok(())

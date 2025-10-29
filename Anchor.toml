@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-wager_protocol = "4jHsbdQ3VvtrxzGC1Mx7bNYGrdKge2imTDAqJC2QHYsB"
+wager_protocol = "82JeHWWTAsHLzQg6XfoXf2HyotFoUrNheNaCd8QphfAC"
 
 [registry]
 url = "https://api.apr.dev"

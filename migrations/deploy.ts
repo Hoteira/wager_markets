@@ -15,7 +15,6 @@ module.exports = async function (provider) {
     const tx = await program.methods
         .initializeProtocol()
         .accounts({
-            protocol: protocolPda,
             authority: provider.wallet.publicKey,
         })
         .rpc();
