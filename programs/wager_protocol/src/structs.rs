@@ -41,7 +41,9 @@ pub struct InitializeProtocol<'info> {
     #[account(
         init,
         payer = authority,
-        space = 8 + Protocol::INIT_SPACE
+        space = 8 + Protocol::INIT_SPACE,
+        seeds = [b"protocol"],
+        bump
     )]
     pub protocol: Account<'info, Protocol>,
     #[account(mut)]
@@ -54,9 +56,13 @@ pub struct CreateMarket<'info> {
     #[account(
         init,
         payer = creator,
-        space = 8 + Market::INIT_SPACE
+        space = 8 + Market::INIT_SPACE,
+        seeds = [b"market", protocol.market_count.to_le_bytes().as_ref()],
+        bump
     )]
     pub market: Account<'info, Market>,
+    #[account(mut)]
+    pub protocol: Account<'info, Protocol>,
     #[account(mut)]
     pub creator: Signer<'info>,
     pub system_program: Program<'info, System>,

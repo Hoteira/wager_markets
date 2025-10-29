@@ -1,12 +1,25 @@
-// Migrations are an early feature. Currently, they're nothing more than this
-// single deploy script that's invoked from the CLI, injecting a provider
-// configured from the workspace's Anchor.toml.
-
 import * as anchor from "@coral-xyz/anchor";
+import { Program } from "@coral-xyz/anchor";
+import { WagerProtocol } from "../target/types/wager_protocol";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
 
-module.exports = async function (provider: anchor.AnchorProvider) {
-  // Configure client to use the provider.
-  anchor.setProvider(provider);
+module.exports = async function (provider) {
+    anchor.setProvider(provider);
+    const program = anchor.workspace.WagerProtocol as Program<WagerProtocol>;
 
-  // Add your deploy script here.
+    const [protocolPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("protocol")],
+        program.programId
+    );
+
+    const tx = await program.methods
+        .initializeProtocol()
+        .accounts({
+            protocol: protocolPda,
+            authority: provider.wallet.publicKey,
+        })
+        .rpc();
+
+    console.log("✅ Protocol initialized:", tx);
+    console.log("Protocol PDA:", protocolPda.toBase58());
 };

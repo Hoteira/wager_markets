@@ -9,7 +9,7 @@ use structs::*;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Transfer};
 
-declare_id!("WAGERmESF3rpG1RtAZvUY5U5c6u3HwGEfvnnEQJAQ9K");
+declare_id!("4jHsbdQ3VvtrxzGC1Mx7bNYGrdKge2imTDAqJC2QHYsB");
 
 #[program]
 pub mod wager_protocol {
@@ -20,6 +20,7 @@ pub mod wager_protocol {
         protocol.authority = ctx.accounts.authority.key();
         protocol.protocol_fee_bps = 50; // 0.5%
         protocol.market_count = 0;
+        
         msg!("WAGER Protocol initialized!");
         Ok(())
     }
