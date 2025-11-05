@@ -1,29 +1,44 @@
 use anchor_lang::error_code;
-
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Invalid outcomes - must be exactly 2")]
+    #[msg("Invalid outcomes")]
     InvalidOutcomes,
-    #[msg("Invalid end time - must be in future")]
+    #[msg("Invalid end time")]
     InvalidEndTime,
-    #[msg("Invalid outcome selection")]
+    #[msg("Escrow not empty")]
+    EscrowNotEmpty,
+    #[msg("Invalid outcome")]
     InvalidOutcome,
-    #[msg("Invalid amount - must be greater than 0")]
+    #[msg("Invalid amount")]
     InvalidAmount,
-    #[msg("Market already resolved")]
+    #[msg("Market resolved")]
     MarketResolved,
-    #[msg("Market has ended")]
+    #[msg("Market ended")]
     MarketEnded,
+    #[msg("Amount overflow")]
+    AmountOverflow,
+    #[msg("Market already ended")]
+    MarketAlreadyEndedForModification,
+    #[msg("Position owner mismatch")]
+    PositionOwnerMismatch,
+    #[msg("Withdraw amount exceeds position")]
+    WithdrawAmountExceedsPosition,
+    #[msg("Insufficient escrow")]
+    InsufficientEscrow,
+    #[msg("Already claimed")]
+    AlreadyClaimed,
     #[msg("Unauthorized")]
     Unauthorized,
     #[msg("Already resolved")]
     AlreadyResolved,
-    #[msg("Market not ended yet")]
+    #[msg("Market not ended")]
     MarketNotEnded,
-    #[msg("Market not resolved yet")]
+    #[msg("Market not resolved")]
     MarketNotResolved,
-    #[msg("Already claimed")]
-    AlreadyClaimed,
-    #[msg("Losing bet - cannot claim")]
-    LosingBet,
+    #[msg("Insufficient liquidity")]
+    InsufficientLiquidity,
+    #[msg("Slippage exceeded")]
+    SlippageExceeded,
+    #[msg("No winners remaining")]
+    NoWinnersRemaining,
 }
