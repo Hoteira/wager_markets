@@ -7,3 +7,6 @@ test-ledger
 .yarn
 env
 .idea
+yarn.lock
+Cargo.lock
+package-lock.json

@@ -41,4 +41,6 @@ pub enum ErrorCode {
     SlippageExceeded,
     #[msg("No winners remaining")]
     NoWinnersRemaining,
+    #[msg("Invalid fee recipient")]
+    InvalidFeeRecipient,
 }

@@ -28,14 +28,17 @@ impl Market {
 #[account]
 pub struct Protocol {
     pub authority: Pubkey,        // 32
+    /// CHECK: The private account of the deployer
+    pub authority_fee_recipient: Pubkey, // 32 (NEW)
     pub protocol_fee_bps: u16,    // 2 (fee taken on winnings)
     pub cancel_fee_bps: u16,      // 2 (fee when cancelling/withdrawing before end)
+    pub amm_fee: u16, //2 fee when swapping tokens in AMM
     pub market_count: u64,        // 8
     pub dev_recipient: Pubkey,    // 32
 }
 
 impl Protocol {
-    pub const INIT_SPACE: usize = 32 + 2 + 2 + 8 + 32;
+    pub const INIT_SPACE: usize = 32 + 32 + 2 + 2 + 2 + 8 + 32;
 }
 
 #[account]
@@ -159,7 +162,11 @@ pub struct WithdrawFromPosition<'info> {
     #[account(seeds = [b"protocol"], bump)]
     pub protocol: Account<'info, Protocol>,
 
-    #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.authority)]
+    /// CHECK: The private account of the deployer
+    #[account(mut)]
+    pub authority_fee_recipient: AccountInfo<'info>,
+
+    #[account(mut, associated_token::mint = token_mint, associated_token::authority = authority_fee_recipient)]
     pub protocol_token_account: Account<'info, TokenAccount>,
 
     #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.dev_recipient)]
@@ -189,7 +196,11 @@ pub struct CancelPosition<'info> {
     #[account(seeds = [b"protocol"], bump)]
     pub protocol: Account<'info, Protocol>,
 
-    #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.authority)]
+    /// CHECK: The private account of the deployer
+    #[account(mut)]
+    pub authority_fee_recipient: AccountInfo<'info>,
+
+    #[account(mut, associated_token::mint = token_mint, associated_token::authority = authority_fee_recipient)]
     pub protocol_token_account: Account<'info, TokenAccount>,
 
     #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.dev_recipient)]
@@ -226,7 +237,11 @@ pub struct ClaimWinnings<'info> {
     #[account(mut, associated_token::mint = token_mint, associated_token::authority = market)]
     pub market_escrow: Account<'info, TokenAccount>,
 
-    #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.authority)]
+    /// CHECK: The private account of the deployer
+    #[account(mut)]
+    pub authority_fee_recipient: AccountInfo<'info>,
+
+    #[account(mut, associated_token::mint = token_mint, associated_token::authority = authority_fee_recipient)]
     pub protocol_token_account: Account<'info, TokenAccount>,
 
     #[account(mut, associated_token::mint = token_mint, associated_token::authority = protocol.dev_recipient)]

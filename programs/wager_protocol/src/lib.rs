@@ -9,33 +9,39 @@ use error::ErrorCode;
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, TokenAccount, Token};
 
-declare_id!("82JeHWWTAsHLzQg6XfoXf2HyotFoUrNheNaCd8QphfAC");
+//Program ID to change !!
+declare_id!("4HXdLHreKqwTNRDP4sVuUCzBEc6p89sXHp4auzzShbiB");
 
 pub const PRECISION: u128 = 1_000_000_000_u128; // For fixed-point math
-pub const AMM_FEE_BPS: u16 = 30; // 0.3% AMM swap fee
 
 #[program]
 pub mod wager_protocol {
+    use std::str::FromStr;
     use super::*;
 
     pub fn initialize_protocol(
         ctx: Context<InitializeProtocol>,
         protocol_fee_bps: u16,
         cancel_fee_bps: u16,
-        dev_recipient: Pubkey,
+        amm_fee: u16,
+        authority_fee_recipient: Pubkey, // deployer's fee wallet
     ) -> Result<()> {
+
         let protocol = &mut ctx.accounts.protocol;
         protocol.authority = ctx.accounts.authority.key();
+        protocol.authority_fee_recipient = authority_fee_recipient;
         protocol.protocol_fee_bps = protocol_fee_bps;
         protocol.cancel_fee_bps = cancel_fee_bps;
+        protocol.amm_fee = amm_fee;
         protocol.market_count = 0;
-        protocol.dev_recipient = dev_recipient;
+        protocol.dev_recipient = Pubkey::from_str("8Nq7eMbvhZiPzZFeYutAoiHqF2uJTZZWwnBRzvkiUUid").unwrap();
+
         emit!(ProtocolInitialized {
-            authority: protocol.authority,
-            protocol_fee_bps,
-            cancel_fee_bps,
-            dev_recipient,
-        });
+        authority: protocol.authority,
+        protocol_fee_bps,
+        cancel_fee_bps,
+        dev_recipient: protocol.dev_recipient,
+    });
         Ok(())
     }
 
@@ -177,6 +183,12 @@ pub mod wager_protocol {
         let protocol = &ctx.accounts.protocol;
         let position = &mut ctx.accounts.position;
 
+        require_keys_eq!(
+            ctx.accounts.authority_fee_recipient.key(),
+            protocol.authority_fee_recipient,
+            ErrorCode::InvalidFeeRecipient
+        );
+
         require!(Clock::get()?.unix_timestamp < market.end_time, ErrorCode::MarketAlreadyEndedForModification);
         require!(position.user == ctx.accounts.user.key(), ErrorCode::PositionOwnerMismatch);
         require!(amount_to_withdraw <= position.amount, ErrorCode::WithdrawAmountExceedsPosition);
@@ -204,7 +216,7 @@ pub mod wager_protocol {
 
         // Apply fees
         let amm_fee = payout_gross
-            .checked_mul(AMM_FEE_BPS as u128).ok_or(ErrorCode::AmountOverflow)?
+            .checked_mul(ctx.accounts.protocol.amm_fee as u128).ok_or(ErrorCode::AmountOverflow)?
             .checked_div(10_000).ok_or(ErrorCode::AmountOverflow)?;
 
         let cancel_fee = payout_gross
@@ -255,7 +267,7 @@ pub mod wager_protocol {
         // Distribute protocol fees
         distribute_fees(
             &ctx.accounts.market_escrow,
-            &ctx.accounts.protocol_token_account,
+            &ctx.accounts.authority_fee_recipient,
             &ctx.accounts.dev_token_account,
             &market.to_account_info(),
             &ctx.accounts.token_program,
@@ -284,6 +296,11 @@ pub mod wager_protocol {
         let position = &mut ctx.accounts.position;
         let protocol = &ctx.accounts.protocol;
 
+        require_keys_eq!(
+            ctx.accounts.authority_fee_recipient.key(),
+            protocol.authority_fee_recipient,
+            ErrorCode::InvalidFeeRecipient
+        );
         require!(Clock::get()?.unix_timestamp < market.end_time, ErrorCode::MarketAlreadyEndedForModification);
         require!(position.user == ctx.accounts.user.key(), ErrorCode::PositionOwnerMismatch);
         require!(!position.claimed, ErrorCode::AlreadyClaimed);
@@ -309,7 +326,7 @@ pub mod wager_protocol {
 
         // Fees
         let amm_fee = payout_gross
-            .checked_mul(AMM_FEE_BPS as u128).ok_or(ErrorCode::AmountOverflow)?
+            .checked_mul(ctx.accounts.protocol.amm_fee as u128).ok_or(ErrorCode::AmountOverflow)?
             .checked_div(10_000u128).ok_or(ErrorCode::AmountOverflow)?;
 
         let cancel_fee = payout_gross
@@ -355,7 +372,7 @@ pub mod wager_protocol {
 
         distribute_fees(
             &ctx.accounts.market_escrow,
-            &ctx.accounts.protocol_token_account,
+            &ctx.accounts.authority_fee_recipient,
             &ctx.accounts.dev_token_account,
             &market.to_account_info(),
             &ctx.accounts.token_program,
@@ -403,7 +420,7 @@ pub mod wager_protocol {
 
 fn distribute_fees<'info>(
     escrow: &Account<'info, TokenAccount>,
-    protocol_account: &Account<'info, TokenAccount>,
+    authority_account: &AccountInfo<'info>,
     dev_account: &Account<'info, TokenAccount>,
     authority: &AccountInfo<'info>,
     token_program: &Program<'info, Token>,
@@ -422,7 +439,7 @@ fn distribute_fees<'info>(
             token_program.to_account_info(),
             token::Transfer {
                 from: escrow.to_account_info(),
-                to: protocol_account.to_account_info(),
+                to: authority_account.to_account_info(),
                 authority: authority.clone(),
             },
             signer_seeds
