@@ -416,6 +416,89 @@ pub mod wager_protocol {
         });
         Ok(())
     }
+
+    /// Claim winnings after the end of the market
+    pub fn claim_winnings(ctx: Context<ClaimWinnings>) -> Result<()> {
+        let market = &mut ctx.accounts.market;
+        let position = &mut ctx.accounts.position;
+        let protocol = &ctx.accounts.protocol;
+
+        require!(market.resolved, ErrorCode::MarketNotResolved);
+        require!(position.user == ctx.accounts.user.key(), ErrorCode::PositionOwnerMismatch);
+        require!(!position.claimed, ErrorCode::AlreadyClaimed);
+        require!(position.amount > 0, ErrorCode::InvalidAmount);
+
+        // Check if user bet on winning outcome
+        let winning_outcome = market.winning_outcome.ok_or(ErrorCode::MarketNotResolved)?;
+        require!(position.outcome == winning_outcome, ErrorCode::InvalidOutcome);
+
+        let winner_pool = market.outcome_pools[winning_outcome as usize];
+        let loser_pool = market.outcome_pools[1 - winning_outcome as usize];
+
+        require!(winner_pool > 0, ErrorCode::NoWinnersRemaining);
+
+        // User's share of losing pool = (position_amount / winner_pool) * loser_pool
+        let user_share = (position.amount as u128)
+            .checked_mul(loser_pool as u128).ok_or(ErrorCode::AmountOverflow)?
+            .checked_div(winner_pool as u128).ok_or(ErrorCode::AmountOverflow)?;
+
+        // Total payout = original stake + winnings
+        let gross_payout = (position.amount as u128)
+            .checked_add(user_share).ok_or(ErrorCode::AmountOverflow)?;
+
+        require!(gross_payout <= u64::MAX as u128, ErrorCode::AmountOverflow);
+        let gross_payout_u64 = gross_payout as u64;
+
+        // Apply protocol fee
+        let protocol_fee = gross_payout
+            .checked_mul(protocol.protocol_fee_bps as u128).ok_or(ErrorCode::AmountOverflow)?
+            .checked_div(10_000).ok_or(ErrorCode::AmountOverflow)?;
+
+        require!(protocol_fee <= u64::MAX as u128, ErrorCode::AmountOverflow);
+        let protocol_fee_u64 = protocol_fee as u64;
+
+        let net_payout = gross_payout_u64.checked_sub(protocol_fee_u64)
+            .ok_or(ErrorCode::AmountOverflow)?;
+
+        // Transfer winnings
+        let id_bytes = market.id.to_le_bytes();
+        let signer_seeds: &[&[&[u8]]] = &[&[b"market", id_bytes.as_ref(), &[market.bump]]];
+
+        token::transfer(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: ctx.accounts.market_escrow.to_account_info(),
+                    to: ctx.accounts.user_token_account.to_account_info(),
+                    authority: market.to_account_info(),
+                },
+                signer_seeds
+            ),
+            net_payout
+        )?;
+
+        // Distribute fees
+        distribute_fees(
+            &ctx.accounts.market_escrow,
+            &ctx.accounts.authority_fee_recipient,
+            &ctx.accounts.dev_token_account,
+            &market.to_account_info(),
+            &ctx.accounts.token_program,
+            signer_seeds,
+            protocol_fee_u64
+        )?;
+
+        position.claimed = true;
+
+        emit!(WinningsClaimed {
+        market: market.key(),
+        position: position.key(),
+        user: position.user,
+        winnings: net_payout
+    });
+
+        Ok(())
+    }
 }
 
 fn distribute_fees<'info>(

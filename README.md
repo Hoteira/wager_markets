@@ -157,15 +157,15 @@ await program.methods
   })
   .rpc();
 
-// Claim winnings
+// Claim winnings after market end
 await program.methods
-  .claimWinnings()
-  .accounts({
-    market,
-    position,
-    user: user.publicKey,
-  })
-  .rpc();
+    .claimWinnings()
+    .accounts({
+        market,
+        position,
+        user: user.publicKey,
+    })
+    .rpc();
 ```
 
 ## AMM Mechanics
