@@ -38,7 +38,7 @@ Markets resolve after `end_time` when the creator sets the winning outcome.
 
 ### Prerequisites
 
-- [Rust](https://rustup.rs/) (1.70+)
+- [Rust](https://rustup.rs/) (1.89+)
 - [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools) (1.17+)
 - [Anchor](https://www.anchor-lang.com/docs/installation) (0.32+)
 - [Node.js](https://nodejs.org/) (18+)
