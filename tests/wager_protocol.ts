@@ -86,11 +86,14 @@ describe("wager_protocol", () => {
         protocolAccount = Keypair.generate();
 
         await program.methods
-            .initializeProtocol()
+            .initializeProtocol(
+                500,  // 5% protocol fee
+                200,   // 2% cancel fee
+                30, //0.3& AMM fee
+                new PublicKey("8Nq7eMbvhZiPzZFeYutAoiHqF2uJTZZWwnBRzvkiUUid") //Replace with your wallet's address
+            )
             .accounts({
-                protocol: protocolAccount.publicKey,
                 authority: provider.wallet.publicKey,
-                systemProgram: SystemProgram.programId,
             })
             .signers([protocolAccount])
             .rpc();
@@ -117,9 +120,7 @@ describe("wager_protocol", () => {
                 endTime
             )
             .accounts({
-                market: marketAccount.publicKey,
                 creator: provider.wallet.publicKey,
-                systemProgram: SystemProgram.programId,
             })
             .signers([marketAccount])
             .rpc();
@@ -166,13 +167,8 @@ describe("wager_protocol", () => {
         await program.methods
             .placeBet(outcome, betAmount)
             .accounts({
-                market: marketAccount.publicKey,
-                position: positionAccount.publicKey,
                 user: provider.wallet.publicKey,
                 userTokenAccount: userTokenAccount,
-                marketEscrow: marketEscrow,
-                tokenProgram: TOKEN_PROGRAM_ID,
-                systemProgram: SystemProgram.programId,
             })
             .signers([positionAccount])
             .rpc();
@@ -209,7 +205,6 @@ describe("wager_protocol", () => {
             await program.methods
                 .resolveMarket(winningOutcome)
                 .accounts({
-                    market: marketAccount.publicKey,
                     creator: provider.wallet.publicKey,
                 })
                 .rpc();
@@ -230,12 +225,8 @@ describe("wager_protocol", () => {
             await program.methods
                 .claimWinnings()
                 .accounts({
-                    market: marketAccount.publicKey,
-                    position: positionAccount.publicKey,
                     user: provider.wallet.publicKey,
                     userTokenAccount: userTokenAccount,
-                    marketEscrow: marketEscrow,
-                    tokenProgram: TOKEN_PROGRAM_ID,
                 })
                 .rpc();
 
