@@ -57,6 +57,12 @@ anchor build
 ```
 
 ### Deployment
+```bash
+git clone https://github.com/Hoteira/wager
+
+cd wager
+```
+
 
 #### 1. Generate a New Solana Wallet
 ```bash
@@ -65,9 +71,6 @@ solana-keygen new --outfile ~/.config/solana/deployer.json
 
 # Set as default
 solana config set --keypair ~/.config/solana/deployer.json
-
-# Check your address
-solana address
 ```
 
 #### 2. Fund Your Wallet
@@ -80,23 +83,9 @@ solana airdrop 5
 solana config set --url mainnet-beta
 ```
 
-#### 3. Update Program ID
-```bash
-# Get your program ID
-anchor keys list
-
-# Update in Anchor.toml and lib.rs
-# Replace: declare_id!("82JeHWWTAsHLzQg6XfoXf2HyotFoUrNheNaCd8QphfAC");
-#
-# And: [programs.devnet]
-# wager_protocol = "82JeHWWTAsHLzQg6XfoXf2HyotFoUrNheNaCd8QphfAC"
-#
-# With your program ID from above
-```
-
 #### 4. Build and Deploy
 ```bash
-# Build with new program ID
+# Build with new program ID (programID should be automatically adjusted)
 anchor build
 
 # Deploy to devnet
@@ -108,7 +97,7 @@ anchor deploy --provider.cluster mainnet
 
 #### 5. Initialize Protocol
 ```bash
-# Remember to replace the PubKey in /migrations/deply.ts eith your private wallet address to receive the fees !
+# Remember to replace the PubKey in /migrations/deploy.ts eith your private wallet address to receive the fees !
 # const tx = await program.methods
 #     .initializeProtocol(
 #          500,  // 5% protocol fee
