@@ -5,7 +5,6 @@ target
 node_modules
 test-ledger
 .yarn
-env
 .idea
 yarn.lock
 Cargo.lock
